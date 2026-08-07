@@ -6,19 +6,16 @@ import java.nio.file.Path;
 
 public final class TemplateEngine {
 
+    TemplateEngine() {
+    }
+
     public static TemplateEngineBuilder builder() {
         return new TemplateEngineBuilder();
     }
 
-    public void process(
-            InputStream in,
-            OutputStream out
-    ) {
+    public void process(InputStream input, OutputStream output) {
     }
 
-    public void process(
-            Path input,
-            Path output
-    ) {
+    public void process(Path input, Path output) {
     }
 }
