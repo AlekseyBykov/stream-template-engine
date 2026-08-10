@@ -3,10 +3,14 @@ package dev.abykov.streamtemplate;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.util.List;
 
 public final class TemplateEngine {
 
-    TemplateEngine() {
+    private final List<Placeholder> placeholders;
+
+    TemplateEngine(List<Placeholder> placeholders) {
+        this.placeholders = List.copyOf(placeholders);
     }
 
     public static TemplateEngineBuilder builder() {
