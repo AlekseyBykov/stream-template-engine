@@ -1,16 +1,22 @@
 package dev.abykov.streamtemplate;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TemplateEngineTest {
+
+    @TempDir
+    Path tempDir;
 
     @Test
     void shouldReplaceSinglePlaceholder() {
@@ -177,5 +183,44 @@ class TemplateEngineTest {
         engine.process(input, output);
 
         assertArrayEquals(source, output.toByteArray());
+    }
+
+    @Test
+    void shouldProcessFiles() throws IOException {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("$name", "Alexey")
+                .replace("$project", "stream-template-engine")
+                .build();
+
+        Path input = tempDir.resolve("input.txt");
+        Path output = tempDir.resolve("output.txt");
+
+        Files.writeString(
+                input,
+                "Hello $name! Welcome to $project.",
+                StandardCharsets.UTF_8
+        );
+
+        engine.process(input, output);
+
+        assertEquals(
+                "Hello Alexey! Welcome to stream-template-engine.",
+                Files.readString(output, StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    void shouldWrapIOExceptionWhenInputFileDoesNotExist() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("$name", "Alexey")
+                .build();
+
+        Path input = tempDir.resolve("missing.txt");
+        Path output = tempDir.resolve("output.txt");
+
+        assertThrows(
+                UncheckedIOException.class,
+                () -> engine.process(input, output)
+        );
     }
 }

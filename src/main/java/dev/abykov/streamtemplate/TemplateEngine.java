@@ -6,8 +6,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 public final class TemplateEngine {
 
@@ -36,12 +38,27 @@ public final class TemplateEngine {
     }
 
     public void process(Path input, Path output) {
+        Objects.requireNonNull(input, "input must not be null");
+        Objects.requireNonNull(output, "output must not be null");
+
+        try (
+                InputStream inputStream = Files.newInputStream(input);
+                OutputStream outputStream = Files.newOutputStream(output)
+        ) {
+            processStream(inputStream, outputStream);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void processStream(
             InputStream input,
             OutputStream output
     ) throws IOException {
+
+        Objects.requireNonNull(input, "input must not be null");
+        Objects.requireNonNull(output, "output must not be null");
+
         if (placeholders.isEmpty()) {
             input.transferTo(output);
             return;
