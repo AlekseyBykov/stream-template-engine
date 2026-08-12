@@ -18,6 +18,9 @@ final class Placeholder {
     }
 
     String replacement() {
-        return replacementSupplier.get();
+        return Objects.requireNonNull(
+                replacementSupplier.get(),
+                "replacement supplier must not return null"
+        );
     }
 }

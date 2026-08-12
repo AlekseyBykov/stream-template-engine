@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -291,5 +292,87 @@ class TemplateEngineTest {
         engine.process(input, output);
 
         assertEquals(0, counter.get());
+    }
+
+    @Test
+    void shouldRejectEmptyPlaceholder() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> TemplateEngine.builder()
+                        .replace("", "value")
+        );
+    }
+
+    @Test
+    void shouldRejectNullPlaceholder() {
+        assertThrows(
+                NullPointerException.class,
+                () -> TemplateEngine.builder()
+                        .replace(null, "value")
+        );
+    }
+
+    @Test
+    void shouldRejectNullReplacement() {
+        assertThrows(
+                NullPointerException.class,
+                () -> TemplateEngine.builder()
+                        .replace("$value", (String) null)
+        );
+    }
+
+    @Test
+    void shouldRejectDuplicatePlaceholder() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> TemplateEngine.builder()
+                        .replace("$value", "first")
+                        .replace("$value", "second")
+        );
+    }
+
+    @Test
+    void shouldRejectNullReplacementSupplier() {
+        assertThrows(
+                NullPointerException.class,
+                () -> TemplateEngine.builder()
+                        .replace("$value", (Supplier<String>) null)
+        );
+    }
+
+    @Test
+    void shouldRejectNullReplacementProducedBySupplier() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("$value", () -> null)
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "$value".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> engine.process(input, output)
+        );
+    }
+
+    @Test
+    void shouldNotEvaluateNullProducingSupplierWhenPlaceholderIsAbsent() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("$value", () -> null)
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "Hello, world!".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(
+                "Hello, world!",
+                output.toString(StandardCharsets.UTF_8)
+        );
     }
 }

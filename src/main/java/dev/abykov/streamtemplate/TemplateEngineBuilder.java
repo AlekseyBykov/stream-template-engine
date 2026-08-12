@@ -25,14 +25,27 @@ public final class TemplateEngineBuilder {
             String placeholder,
             Supplier<String> supplier
     ) {
-        placeholders.add(
-                new Placeholder(
-                        Objects.requireNonNull(placeholder),
-                        Objects.requireNonNull(supplier)
-                )
-        );
+        Objects.requireNonNull(placeholder, "placeholder must not be null");
+        Objects.requireNonNull(supplier, "replacement supplier must not be null");
+
+        if (placeholder.isEmpty()) {
+            throw new IllegalArgumentException("placeholder must not be empty");
+        }
+
+        if (containsPlaceholder(placeholder)) {
+            throw new IllegalArgumentException(
+                    "placeholder is already registered: " + placeholder
+            );
+        }
+
+        placeholders.add(new Placeholder(placeholder, supplier));
 
         return this;
+    }
+
+    private boolean containsPlaceholder(String placeholder) {
+        return placeholders.stream()
+                .anyMatch(existing -> existing.pattern().equals(placeholder));
     }
 
     public TemplateEngine build() {
