@@ -10,6 +10,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -222,5 +223,73 @@ class TemplateEngineTest {
                 UncheckedIOException.class,
                 () -> engine.process(input, output)
         );
+    }
+
+    @Test
+    void shouldNotCloseProvidedStreams() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("$name", "Alexey")
+                .build();
+
+        CloseTrackingInputStream input = new CloseTrackingInputStream(
+                "Hello $name".getBytes(StandardCharsets.UTF_8)
+        );
+
+        CloseTrackingOutputStream output = new CloseTrackingOutputStream();
+
+        engine.process(input, output);
+
+        assertFalse(input.isClosed());
+        assertFalse(output.isClosed());
+    }
+
+    @Test
+    void shouldEvaluateSupplierLazilyForEachOccurrence() {
+        AtomicInteger counter = new AtomicInteger();
+
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace(
+                        "$value",
+                        () -> "value-" + counter.incrementAndGet()
+                )
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "$value $value $value".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(
+                "value-1 value-2 value-3",
+                output.toString(StandardCharsets.UTF_8)
+        );
+
+        assertEquals(3, counter.get());
+    }
+
+    @Test
+    void shouldKeepSupplierUnevaluatedWhenPlaceholderIsAbsent() {
+        AtomicInteger counter = new AtomicInteger();
+
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace(
+                        "$value",
+                        () -> {
+                            counter.incrementAndGet();
+                            return "replacement";
+                        }
+                )
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "Hello, world!".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(0, counter.get());
     }
 }
