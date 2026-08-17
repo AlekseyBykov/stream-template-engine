@@ -97,6 +97,23 @@ public final class TemplateEngine {
                 return;
             }
 
+            Placeholder longestMatch = findLongestMatchingPrefix(candidate);
+
+            if (longestMatch != null) {
+                byte[] pattern = longestMatch.patternBytes();
+
+                writeReplacement(output, longestMatch);
+
+                pending.reset();
+                pending.write(
+                        candidate,
+                        pattern.length,
+                        candidate.length - pattern.length
+                );
+
+                continue;
+            }
+
             output.write(candidate[0]);
 
             pending.reset();
@@ -106,7 +123,7 @@ public final class TemplateEngine {
 
     private Placeholder findExactMatch(byte[] candidate) {
         for (Placeholder placeholder : placeholders) {
-            byte[] pattern = toBytes(placeholder.pattern());
+            byte[] pattern = placeholder.patternBytes();
 
             if (pattern.length == candidate.length
                 && startsWith(pattern, candidate)) {
@@ -119,7 +136,7 @@ public final class TemplateEngine {
 
     private boolean hasMatchingPrefix(byte[] candidate) {
         for (Placeholder placeholder : placeholders) {
-            byte[] pattern = toBytes(placeholder.pattern());
+            byte[] pattern = placeholder.patternBytes();
 
             if (candidate.length <= pattern.length
                 && startsWith(pattern, candidate)) {
@@ -132,7 +149,7 @@ public final class TemplateEngine {
 
     private boolean hasLongerMatchingPrefix(byte[] candidate) {
         for (Placeholder placeholder : placeholders) {
-            byte[] pattern = toBytes(placeholder.pattern());
+            byte[] pattern = placeholder.patternBytes();
 
             if (candidate.length < pattern.length
                 && startsWith(pattern, candidate)) {
@@ -143,13 +160,32 @@ public final class TemplateEngine {
         return false;
     }
 
-    private boolean startsWith(byte[] pattern, byte[] candidate) {
-        if (candidate.length > pattern.length) {
+    private Placeholder findLongestMatchingPrefix(byte[] candidate) {
+        Placeholder longestMatch = null;
+        int longestMatchLength = 0;
+
+        for (Placeholder placeholder : placeholders) {
+            byte[] pattern = placeholder.patternBytes();
+
+            if (pattern.length <= candidate.length
+                && startsWith(candidate, pattern)
+                && pattern.length > longestMatchLength) {
+
+                longestMatch = placeholder;
+                longestMatchLength = pattern.length;
+            }
+        }
+
+        return longestMatch;
+    }
+
+    private boolean startsWith(byte[] value, byte[] prefix) {
+        if (prefix.length > value.length) {
             return false;
         }
 
-        for (int i = 0; i < candidate.length; i++) {
-            if (pattern[i] != candidate[i]) {
+        for (int i = 0; i < prefix.length; i++) {
+            if (value[i] != prefix[i]) {
                 return false;
             }
         }

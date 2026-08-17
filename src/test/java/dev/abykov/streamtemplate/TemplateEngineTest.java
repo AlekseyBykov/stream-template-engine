@@ -375,4 +375,101 @@ class TemplateEngineTest {
                 output.toString(StandardCharsets.UTF_8)
         );
     }
+
+    @Test
+    void shouldFindPlaceholderAfterOverlappingPrefix() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("aab", "X")
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "aaab".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(
+                "aX",
+                output.toString(StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    void shouldHandleOverlappingPlaceholders() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("abab", "X")
+                .replace("bab", "Y")
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "ababbab".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(
+                "XY",
+                output.toString(StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    void shouldFindPlaceholderImmediatelyAfterFailedPrefix() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("$project", "X")
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "$pro$project".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(
+                "$proX",
+                output.toString(StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    void shouldFindPlaceholderAfterRepeatedFailedPrefixes() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("aaab", "X")
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "aaaaab".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(
+                "aaX",
+                output.toString(StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    void shouldUseShorterPlaceholderWhenLongerMatchFails() {
+        TemplateEngine engine = TemplateEngine.builder()
+                .replace("$id", "short")
+                .replace("$identifier", "long")
+                .build();
+
+        ByteArrayInputStream input = new ByteArrayInputStream(
+                "$idX".getBytes(StandardCharsets.UTF_8)
+        );
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        engine.process(input, output);
+
+        assertEquals(
+                "shortX",
+                output.toString(StandardCharsets.UTF_8)
+        );
+    }
 }
