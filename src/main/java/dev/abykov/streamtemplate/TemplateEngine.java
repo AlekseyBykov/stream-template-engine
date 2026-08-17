@@ -100,7 +100,7 @@ public final class TemplateEngine {
             Placeholder longestMatch = findLongestMatchingPrefix(candidate);
 
             if (longestMatch != null) {
-                byte[] pattern = toBytes(longestMatch.pattern());
+                byte[] pattern = longestMatch.patternBytes();
 
                 writeReplacement(output, longestMatch);
 
@@ -123,7 +123,7 @@ public final class TemplateEngine {
 
     private Placeholder findExactMatch(byte[] candidate) {
         for (Placeholder placeholder : placeholders) {
-            byte[] pattern = toBytes(placeholder.pattern());
+            byte[] pattern = placeholder.patternBytes();
 
             if (pattern.length == candidate.length
                 && startsWith(pattern, candidate)) {
@@ -136,7 +136,7 @@ public final class TemplateEngine {
 
     private boolean hasMatchingPrefix(byte[] candidate) {
         for (Placeholder placeholder : placeholders) {
-            byte[] pattern = toBytes(placeholder.pattern());
+            byte[] pattern = placeholder.patternBytes();
 
             if (candidate.length <= pattern.length
                 && startsWith(pattern, candidate)) {
@@ -149,7 +149,7 @@ public final class TemplateEngine {
 
     private boolean hasLongerMatchingPrefix(byte[] candidate) {
         for (Placeholder placeholder : placeholders) {
-            byte[] pattern = toBytes(placeholder.pattern());
+            byte[] pattern = placeholder.patternBytes();
 
             if (candidate.length < pattern.length
                 && startsWith(pattern, candidate)) {
@@ -165,7 +165,7 @@ public final class TemplateEngine {
         int longestMatchLength = 0;
 
         for (Placeholder placeholder : placeholders) {
-            byte[] pattern = toBytes(placeholder.pattern());
+            byte[] pattern = placeholder.patternBytes();
 
             if (pattern.length <= candidate.length
                 && startsWith(candidate, pattern)
